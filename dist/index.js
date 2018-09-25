@@ -2,6 +2,10 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
+function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
+
+var path = _interopDefault(require('path'));
+
 function _defineProperty(obj, key, value) {
   if (key in obj) {
     Object.defineProperty(obj, key, {
@@ -55,23 +59,6 @@ function _iterableToArray(iter) {
 function _nonIterableSpread() {
   throw new TypeError("Invalid attempt to spread non-iterable instance");
 }
-
-const mergeArrayElements = (firstArray, secondArray, compare = (a, b) => a.name === b.name) => {
-  const mergedElements = [];
-  firstArray.forEach(elementInFirstArray => {
-    const existingRule = secondArray.find(elementInSecondArray => {
-      return compare(elementInFirstArray, elementInSecondArray);
-    });
-
-    if (!existingRule) {
-      mergedElements.push(_objectSpread({}, elementInFirstArray));
-    }
-  });
-  secondArray.forEach(elementInSecondArray => {
-    mergedElements.push(_objectSpread({}, firstArray.find(elementInFirstArray => compare(elementInFirstArray, elementInSecondArray)) || {}, elementInSecondArray));
-  });
-  return mergedElements;
-};
 
 // syntax
 const arrowFunction = {
@@ -252,6 +239,23 @@ const createMinifyOptions = () => {
   };
 };
 
+const mergeArrayElements = (firstArray, secondArray, compare = (a, b) => a.name === b.name) => {
+  const mergedElements = [];
+  firstArray.forEach(elementInFirstArray => {
+    const existingRule = secondArray.find(elementInSecondArray => {
+      return compare(elementInFirstArray, elementInSecondArray);
+    });
+
+    if (!existingRule) {
+      mergedElements.push(_objectSpread({}, elementInFirstArray));
+    }
+  });
+  secondArray.forEach(elementInSecondArray => {
+    mergedElements.push(_objectSpread({}, firstArray.find(elementInFirstArray => compare(elementInFirstArray, elementInSecondArray)) || {}, elementInSecondArray));
+  });
+  return mergedElements;
+};
+
 const mergeOptions = (...objects) => {
   const options = objects.reduce((accumulator, object) => {
     if (typeof object === undefined || object === null) {
@@ -268,22 +272,47 @@ const mergeOptions = (...objects) => {
   });
   return options;
 };
-const createConfig = options => {
+
+const createConfig = (options = {}) => {
   return _objectSpread({}, options, {
-    plugins: options.plugins.filter(plugin => plugin.enabled).map(plugin => {
+    plugins: options.plugins ? options.plugins.filter(plugin => plugin.enabled).map(plugin => {
       return [plugin.name, plugin.settings];
-    })
+    }) : []
   });
 };
-const config = createConfig(mergeOptions(createModuleOptions({
+
+const {
+  transformAsync,
+  transformFromAstSync
+} = require("@babel/core"); // do not forget this file will be execute from dist/index.js
+// so we want root to be ../
+
+
+const root = path.resolve(__dirname, "../");
+const transform = (code, ...options) => {
+  return transformAsync(code, _objectSpread({}, createConfig(mergeOptions.apply(void 0, options)), {
+    cwd: root
+  }));
+};
+const transformFromAst = (ast, code, ...options) => {
+  return transformFromAstSync(ast, code, _objectSpread({}, createConfig(mergeOptions.apply(void 0, options)), {
+    cwd: root
+  }));
+};
+
+// https://babeljs.io/docs/plugins/
+const options = mergeOptions(createModuleOptions({
   inputModuleFormat: "es",
   outputModuleFormat: "cjs"
-}), createSyntaxOptions()));
+}), createSyntaxOptions());
+const config = createConfig(options);
 
 exports.createModuleOptions = createModuleOptions;
 exports.createSyntaxOptions = createSyntaxOptions;
 exports.createMinifyOptions = createMinifyOptions;
 exports.mergeOptions = mergeOptions;
-exports.createConfig = createConfig;
+exports.transform = transform;
+exports.transformFromAst = transformFromAst;
+exports.options = options;
 exports.config = config;
 //# sourceMappingURL=index.js.map
