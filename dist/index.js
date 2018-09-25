@@ -290,14 +290,14 @@ const {
 
 const root = path.resolve(__dirname, "../");
 const transform = (code, ...options) => {
-  return transformAsync(code, _objectSpread({}, createConfig(mergeOptions.apply(void 0, options)), {
+  return transformAsync(code, _objectSpread({
     cwd: root
-  }));
+  }, createConfig(mergeOptions.apply(void 0, options))));
 };
 const transformFromAst = (ast, code, ...options) => {
-  return transformFromAstSync(ast, code, _objectSpread({}, createConfig(mergeOptions.apply(void 0, options)), {
+  return transformFromAstSync(ast, code, _objectSpread({
     cwd: root
-  }));
+  }, createConfig(mergeOptions.apply(void 0, options))));
 };
 
 // https://babeljs.io/docs/plugins/
